@@ -13,6 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../../../supabase/auth";
+import { checkSupabaseConnection } from "../../../supabase/supabase";
 import { Home } from "lucide-react";
 import Header from "@/components/ui/header";
 
@@ -31,25 +32,17 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      // For demo purposes, allow a fallback login when Supabase is unavailable
-      if (email === "admin@arborcard.com" && password === "admin123") {
-        // Set a session in localStorage to maintain login state
-        localStorage.setItem("adminAuthenticated", "true");
-        localStorage.setItem(
-          "adminUser",
-          JSON.stringify({
-            email: "admin@arborcard.com",
-            name: "Admin User",
-            role: "admin",
-          }),
-        );
-
+      // Check if we're offline before attempting Supabase auth
+      const isConnected = await checkSupabaseConnection();
+      if (!isConnected) {
         toast({
-          title: "Demo login successful",
-          description: "Welcome to the admin dashboard (demo mode)",
+          title: "Connection Error",
+          description:
+            "Unable to connect to authentication server. Please check your internet connection and try again.",
+          variant: "destructive",
+          duration: 10000,
         });
-
-        navigate("/admin-dashboard");
+        setIsLoading(false);
         return;
       }
 
@@ -75,14 +68,14 @@ export default function AdminLoginPage() {
         toast({
           title: "Connection Error",
           description:
-            "Unable to connect to authentication server. Try using demo credentials: admin@arborcard.com / admin123",
+            "Unable to connect to authentication server. Please check your internet connection and try again.",
           variant: "destructive",
           duration: 10000,
         });
       } else {
         toast({
           title: "Login failed",
-          description: "Invalid email or password",
+          description: error?.message || "Invalid email or password",
           variant: "destructive",
         });
       }

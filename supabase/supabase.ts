@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
+import { supabaseConfig } from "../src/supabase-config";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseUrl = supabaseConfig.supabaseUrl || "";
+const supabaseAnonKey = supabaseConfig.supabaseAnonKey || "";
 
 // Add validation and better error handling for Supabase initialization
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -47,6 +48,25 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Add a helper function to check connection status
 export const checkSupabaseConnection = async () => {
   try {
+    // First try a simple fetch to the Supabase URL
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(supabaseUrl, {
+        method: "HEAD",
+        signal: controller.signal,
+        // Add cache busting to prevent cached responses
+        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+      });
+      clearTimeout(timeoutId);
+      if (response.ok) return true;
+    } catch (fetchError) {
+      console.log("Fetch connection test failed:", fetchError);
+      // Continue to the next test if fetch fails
+    }
+
+    // If fetch fails, try a database query as backup
     const { error } = await supabase
       .from("leads")
       .select("count", { count: "exact", head: true });

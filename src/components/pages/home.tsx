@@ -30,7 +30,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../ui/accordion";
-import { supabase } from "../../../supabase/supabase";
+import { supabase, checkSupabaseConnection } from "../../../supabase/supabase";
 import {
   Dialog,
   DialogContent,
@@ -175,17 +175,15 @@ export default function LandingPage() {
           return;
         }
 
-        // Then try to ping Supabase with timeout using AbortController
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        // Use the improved connection check from supabase.ts
+        const isConnected = await checkSupabaseConnection();
+        setIsOffline(!isConnected);
 
-        const response = await fetch(import.meta.env.VITE_SUPABASE_URL || "", {
-          method: "HEAD",
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-        setIsOffline(!response.ok);
+        if (!isConnected) {
+          console.log(
+            "Supabase connection unavailable - offline mode activated",
+          );
+        }
       } catch (error) {
         console.log("Connection check failed:", error);
         setIsOffline(true);

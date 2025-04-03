@@ -233,100 +233,31 @@ export default function ReducePaymentProcessingFees() {
             </div>
           </div>
 
-          <ol className="flex items-center space-x-2 mt-8">
-            <li>
-              <a
-                className="flex items-center hover:text-blue-600 transition-colors"
-                href="/"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  className="lucide lucide-home h-4 w-4"
-                >
-                  <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-                <span className="sr-only">Home</span>
-              </a>
-            </li>
-            <li className="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                className="lucide lucide-chevron-right h-4 w-4 mx-1 text-gray-400"
-              >
-                <path d="m9 18 6-6-6-6"></path>
-              </svg>
-              <a className="hover:text-blue-600 transition-colors" href="/">
-                Home
-              </a>
-            </li>
-            <li className="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                className="lucide lucide-chevron-right h-4 w-4 mx-1 text-gray-400"
-              >
-                <path d="m9 18 6-6-6-6"></path>
-              </svg>
-              <a className="hover:text-blue-600 transition-colors" href="/blog">
-                Blog
-              </a>
-            </li>
-            <li className="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                className="lucide lucide-chevron-right h-4 w-4 mx-1 text-gray-400"
-              >
-                <path d="m9 18 6-6-6-6"></path>
-              </svg>
-              <span className="font-medium text-gray-900">
-                5 Ways to Reduce Your Payment Processing Fees
-              </span>
-            </li>
-          </ol>
+          {/* Bottom breadcrumbs for easier navigation */}
+          <div className="mt-12">
+            <Breadcrumb
+              items={[
+                { title: "Home", href: "/" },
+                { title: "Blog", href: "/blog" },
+                {
+                  title: "5 Ways to Reduce Your Payment Processing Fees",
+                  href: "/blog/reduce-payment-processing-fees",
+                },
+              ]}
+            />
+          </div>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-between">
-            <a href="/blog/contactless-payment-trends">
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full sm:w-auto">
+            <Link to="/blog/contactless-payment-trends">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <span className="mr-2">←</span> Previous Article
-              </button>
-            </a>
-            <a href="/blog/mobile-payment-security">
-              <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full sm:w-auto">
+              </Button>
+            </Link>
+            <Link to="/blog/mobile-payment-security">
+              <Button variant="outline" className="w-full sm:w-auto">
                 Next Article <span className="ml-2">→</span>
-              </button>
-            </a>
+              </Button>
+            </Link>
           </div>
         </div>
       </main>

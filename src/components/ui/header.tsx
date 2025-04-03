@@ -28,6 +28,11 @@ export default function Header() {
                 Contact Us
               </Button>
             </Link>
+            <Link to="/">
+              <Button className="rounded-full bg-green-600 text-white hover:bg-green-700 text-sm px-4 shadow">
+                GET A QUOTE
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

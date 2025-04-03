@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,6 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "../../../supabase/auth";
+import { Home } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -83,9 +84,18 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">
-              {isLogin ? "Admin Login" : "Admin Registration"}
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-2xl font-bold">
+                {isLogin ? "Admin Login" : "Admin Registration"}
+              </CardTitle>
+              <Link
+                to="/"
+                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                aria-label="Return to home page"
+              >
+                <Home className="h-5 w-5 text-gray-700" />
+              </Link>
+            </div>
             <CardDescription>
               {isLogin
                 ? "Enter your credentials to access the admin dashboard"

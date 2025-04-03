@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "../../../../supabase/auth";
 import { useState } from "react";
+import Notifications from "../Notifications";
+import AdminFooter from "./AdminFooter";
+import { motion } from "framer-motion";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -28,48 +31,14 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "New lead submitted",
-      message: "A new lead has been submitted from the website.",
-      time: "10 minutes ago",
-      read: false,
-    },
-    {
-      id: 2,
-      title: "Lead status updated",
-      message: "Lead 'Coffee Shop London' has been marked as qualified.",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 3,
-      title: "System update",
-      message: "The system will undergo maintenance tonight at 2 AM.",
-      time: "Yesterday",
-      read: true,
-    },
-  ]);
 
-  const markAsRead = (id: number) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification,
-      ),
-    );
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
   };
-
-  const markAllAsRead = () => {
-    setNotifications(
-      notifications.map((notification) => ({ ...notification, read: true })),
-    );
-  };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const navItems = [
     {
@@ -165,10 +134,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <Button
               variant="ghost"
               className="w-full mt-4 text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={() => {
-                signOut();
-                window.location.href = "/";
-              }}
+              onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
@@ -183,73 +149,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <header className="bg-white shadow-sm sticky top-0 z-30 w-full">
           <div className="flex items-center justify-end h-16 px-2 sm:px-4 lg:px-8">
             {/* Notifications */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative"
-              >
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    {unreadCount}
-                  </span>
-                )}
-              </Button>
-
-              {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-64 sm:w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50">
-                  <div className="p-3 border-b flex justify-between items-center">
-                    <h3 className="font-medium">Notifications</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={markAllAsRead}
-                      className="text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      Mark all as read
-                    </Button>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-3 border-b hover:bg-gray-50 cursor-pointer ${!notification.read ? "bg-blue-50" : ""}`}
-                          onClick={() => markAsRead(notification.id)}
-                        >
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-sm">
-                              {notification.title}
-                            </h4>
-                            <span className="text-xs text-gray-500">
-                              {notification.time}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {notification.message}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-gray-500">
-                        No notifications
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2 border-t text-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-blue-600 hover:text-blue-800 w-full"
-                      onClick={() => setNotificationsOpen(false)}
-                    >
-                      Close
-                    </Button>
-                  </div>
-                </div>
-              )}
+            <div className="relative mr-4">
+              <Notifications />
             </div>
 
             {/* User menu */}
@@ -272,18 +173,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    window.location.href = "/admin-dashboard/settings";
+                    navigate("/admin-dashboard/settings");
                   }}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    signOut();
-                    window.location.href = "/";
-                  }}
-                >
+                <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign out
                 </DropdownMenuItem>
@@ -293,7 +189,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-3 sm:p-4 lg:p-8 overflow-x-hidden">{children}</main>
+        <main className="p-3 sm:p-4 lg:p-8 overflow-x-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {children}
+          </motion.div>
+        </main>
       </div>
 
       {/* Overlay for mobile sidebar */}
@@ -303,6 +207,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
+      <AdminFooter />
     </div>
   );
 }

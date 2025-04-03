@@ -14,6 +14,11 @@ import { Toaster } from "./components/ui/toaster";
 import { LoadingScreen } from "./components/ui/loading-spinner";
 import AdminLayout from "./components/admin/layout/AdminLayout";
 import Dashboard from "./components/admin/Dashboard";
+import SignUpConfirmation from "./components/auth/SignUpConfirmation";
+import PasswordResetConfirmation from "./components/auth/PasswordResetConfirmation";
+import ForgotPassword from "./components/pages/forgot-password";
+import ResetPassword from "./components/pages/reset-password";
+import { NotificationProvider } from "./components/admin/NotificationProvider";
 
 // Import all the new pages
 import AboutUs from "./components/pages/about-us";
@@ -39,17 +44,24 @@ import DojoRestaurantApp from "./components/pages/services/dojo-restaurant-app";
 import ServicesIndex from "./components/pages/services";
 
 function AppRoutes() {
-  // For Tempo routes
-  const tempoRoutes =
+  // Use Tempo routes if in Tempo environment
+  const tempoRoutesElement =
     import.meta.env.VITE_TEMPO === "true" ? useRoutes(routes) : null;
 
   return (
-    <>
-      {tempoRoutes}
+    <NotificationProvider>
+      {tempoRoutesElement}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/admin-login" element={<AdminLoginPage />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route
+          path="/admin-dashboard"
+          element={
+            <AdminLayout>
+              <Dashboard />
+            </AdminLayout>
+          }
+        />
         <Route
           path="/admin-dashboard/leads"
           element={
@@ -91,6 +103,10 @@ function AppRoutes() {
           }
         />
         <Route path="/success" element={<Success />} />
+
+        {/* Auth pages */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Service pages */}
         <Route path="/services" element={<ServicesIndex />} />
@@ -149,12 +165,19 @@ function AppRoutes() {
         <Route path="/cookie-policy" element={<CookiePolicy />} />
         <Route path="/gdpr-compliance" element={<GdprCompliance />} />
 
+        {/* Auth confirmation pages */}
+        <Route path="/signup-confirmation" element={<SignUpConfirmation />} />
+        <Route
+          path="/password-reset-confirmation"
+          element={<PasswordResetConfirmation />}
+        />
+
         {/* Add a catch-all route for Tempo */}
         {import.meta.env.VITE_TEMPO === "true" && (
           <Route path="/tempobook/*" element={null} />
         )}
       </Routes>
-    </>
+    </NotificationProvider>
   );
 }
 

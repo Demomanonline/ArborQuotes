@@ -43,7 +43,7 @@ export default function MobileCardReaders() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
             <div>
               <img
-                src="https://images.unsplash.com/photo-1564466809058-bf4114d55352?w=800&q=80"
+                src="https://images.unsplash.com/photo-1677058559072-93f06cf25b00?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 alt="Mobile Card Reader"
                 className="rounded-lg shadow-md w-full h-auto"
               />

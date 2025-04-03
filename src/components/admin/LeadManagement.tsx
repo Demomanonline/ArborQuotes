@@ -297,7 +297,7 @@ export default function LeadManagement() {
               <TableHead>Business Type</TableHead>
               <TableHead>Monthly Turnover</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Date & Time</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -355,7 +355,8 @@ export default function LeadManagement() {
                     to={`/admin-dashboard/leads/${lead.id}`}
                     className="block"
                   >
-                    {new Date(lead.created_at || "").toLocaleDateString()}
+                    {new Date(lead.created_at || "").toLocaleDateString()}{" "}
+                    {new Date(lead.created_at || "").toLocaleTimeString()}
                   </Link>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>

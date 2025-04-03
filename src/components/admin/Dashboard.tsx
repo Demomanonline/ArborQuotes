@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight, Users, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { motion } from "framer-motion";
 
 type Lead = Tables<"leads">;
 
@@ -21,6 +32,8 @@ export default function Dashboard() {
     conversionRate: 0,
     avgResponseTime: 0,
   });
+
+  const [chartData, setChartData] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +48,7 @@ export default function Dashboard() {
 
         setLeads(data || []);
         calculateStats(data || []);
+        prepareChartData(data || []);
       } catch (error) {
         console.error("Error fetching leads:", error);
         toast({
@@ -81,6 +95,82 @@ export default function Dashboard() {
     });
   };
 
+  const prepareChartData = (leads: Lead[]) => {
+    // Group leads by month
+    const leadsByMonth: Record<
+      string,
+      {
+        month: string;
+        new: number;
+        contacted: number;
+        qualified: number;
+        disqualified: number;
+      }
+    > = {};
+
+    // If no leads, create sample data
+    if (leads.length === 0) {
+      const sampleData = [
+        { month: "Jan", new: 4, contacted: 3, qualified: 2, disqualified: 1 },
+        { month: "Feb", new: 6, contacted: 4, qualified: 3, disqualified: 2 },
+        { month: "Mar", new: 8, contacted: 6, qualified: 4, disqualified: 1 },
+        { month: "Apr", new: 10, contacted: 8, qualified: 5, disqualified: 2 },
+        { month: "May", new: 12, contacted: 9, qualified: 6, disqualified: 3 },
+        { month: "Jun", new: 9, contacted: 7, qualified: 5, disqualified: 2 },
+      ];
+      setChartData(sampleData);
+      return;
+    }
+
+    // Process actual lead data
+    leads.forEach((lead) => {
+      const createdAt = lead.created_at
+        ? new Date(lead.created_at)
+        : new Date();
+      const monthKey = createdAt.toLocaleString("default", { month: "short" });
+
+      if (!leadsByMonth[monthKey]) {
+        leadsByMonth[monthKey] = {
+          month: monthKey,
+          new: 0,
+          contacted: 0,
+          qualified: 0,
+          disqualified: 0,
+        };
+      }
+
+      // Increment the appropriate status count
+      if (lead.status === "new") leadsByMonth[monthKey].new += 1;
+      else if (lead.status === "contacted")
+        leadsByMonth[monthKey].contacted += 1;
+      else if (lead.status === "qualified")
+        leadsByMonth[monthKey].qualified += 1;
+      else if (lead.status === "disqualified")
+        leadsByMonth[monthKey].disqualified += 1;
+    });
+
+    // Convert to array and sort by month
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const chartData = Object.values(leadsByMonth).sort((a, b) => {
+      return months.indexOf(a.month) - months.indexOf(b.month);
+    });
+
+    setChartData(chartData);
+  };
+
   // Get leads from the last 7 days for the "from last week" metric
   const getLeadsLastWeek = () => {
     const oneWeekAgo = new Date();
@@ -108,7 +198,12 @@ export default function Dashboard() {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Dashboard Overview</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
         <Card>
           <CardContent className="pt-6">
             <h3 className="text-lg font-medium text-gray-500 mb-2">
@@ -144,9 +239,14 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
         <Card>
           <CardHeader>
             <CardTitle>Lead Status Breakdown</CardTitle>
@@ -243,22 +343,52 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lead Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center border border-dashed rounded-lg">
-            <p className="text-gray-500">
-              {loading
-                ? "Loading chart data..."
-                : "Chart visualization will appear here"}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Lead Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="h-64 flex items-center justify-center border border-dashed rounded-lg">
+                <p className="text-gray-500">Loading chart data...</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={chartData}
+                  margin={{
+                    top: 20,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="new" fill="#3b82f6" name="New" />
+                  <Bar dataKey="contacted" fill="#eab308" name="Contacted" />
+                  <Bar dataKey="qualified" fill="#22c55e" name="Qualified" />
+                  <Bar
+                    dataKey="disqualified"
+                    fill="#ef4444"
+                    name="Disqualified"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

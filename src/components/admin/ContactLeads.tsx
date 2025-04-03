@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -177,7 +178,9 @@ export default function ContactLeads() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Contact Leads</h2>
-        <Button onClick={fetchContacts}>Refresh</Button>
+        <Button onClick={fetchContacts} disabled={loading}>
+          {loading ? "Loading..." : "Refresh"}
+        </Button>
       </div>
 
       <Card>
@@ -234,6 +237,11 @@ export default function ContactLeads() {
                       <h3 className="font-medium">{contact.name}</h3>
                       <div className="text-sm text-gray-500">
                         {formatDate(contact.created_at)}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {formatDistanceToNow(new Date(contact.created_at), {
+                          addSuffix: true,
+                        })}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

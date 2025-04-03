@@ -36,7 +36,7 @@ export default function ServicesIndex() {
       description:
         "Perfect for retail stores, restaurants, and businesses with a fixed point of sale.",
       image:
-        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
+        "https://images.unsplash.com/photo-1673837552444-7a90431588fe?w=800&q=80",
       link: "/services/countertop-terminals",
       color: "bg-gray-50",
       buttonColor: "bg-blue-600 hover:bg-blue-700",
@@ -46,7 +46,7 @@ export default function ServicesIndex() {
       description:
         "Ideal for restaurants, cafes, and businesses that need flexibility within premises.",
       image:
-        "https://images.unsplash.com/photo-1622445275576-721325763afe?w=800&q=80",
+        "https://images.unsplash.com/photo-1683313107043-283d0319a11e?w=800&q=80",
       link: "/services/portable-terminals",
       color: "bg-purple-50",
       buttonColor: "bg-purple-600 hover:bg-purple-700",
@@ -56,7 +56,7 @@ export default function ServicesIndex() {
       description:
         "Perfect for mobile businesses, pop-up shops, and on-the-go entrepreneurs.",
       image:
-        "https://images.unsplash.com/photo-1564466809058-bf4114d55352?w=800&q=80",
+        "https://images.unsplash.com/photo-1677058559072-93f06cf25b00?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       link: "/services/mobile-card-readers",
       color: "bg-green-50",
       buttonColor: "bg-green-600 hover:bg-green-700",
@@ -66,7 +66,7 @@ export default function ServicesIndex() {
       description:
         "Complete point-of-sale solutions for businesses stock and management",
       image:
-        "https://images.unsplash.com/photo-1556742031-c6961e8560b0?w=800&q=80",
+        "https://images.unsplash.com/photo-1647427017067-8f33ccbae493?w=800&q=80",
       link: "/services/pos-systems",
       color: "bg-orange-50",
       buttonColor: "bg-orange-600 hover:bg-orange-700",

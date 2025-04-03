@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import { Button } from "./button";
 import { Menu, X } from "lucide-react";
 
-export default function Header() {
+// Keep default export for backward compatibility
+export default Header;
+
+export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {

@@ -65,7 +65,7 @@ export default function PortableTerminals() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
             <div>
               <img
-                src="https://images.unsplash.com/photo-1556742231-77da025371f5?w=800&q=80"
+                src="https://images.unsplash.com/photo-1683313107043-283d0319a11e?w=800&q=80"
                 alt="Portable Card Terminal"
                 className="rounded-lg shadow-md w-full h-auto"
               />

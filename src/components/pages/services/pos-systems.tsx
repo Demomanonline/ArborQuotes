@@ -37,7 +37,7 @@ export default function PosSystems() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
             <div>
               <img
-                src="https://images.unsplash.com/photo-1556742031-c6961e8560b0?w=800&q=80"
+                src="https://images.unsplash.com/photo-1647427017067-8f33ccbae493?w=800&q=80"
                 alt="POS System"
                 className="rounded-lg shadow-md w-full h-auto"
               />

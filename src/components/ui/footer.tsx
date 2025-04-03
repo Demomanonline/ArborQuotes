@@ -109,7 +109,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/admin-dashboard"
+                  to="/admin-login"
                   className="hover:text-white text-xs opacity-50"
                 >
                   Admin Login

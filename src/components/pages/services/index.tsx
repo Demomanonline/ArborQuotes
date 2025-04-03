@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { SEO } from "@/components/ui/seo";
+import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 
 export default function ServicesIndex() {
@@ -77,31 +78,7 @@ export default function ServicesIndex() {
         keywords="payment services, card payment, payment solutions, card terminals, payment processing, POS systems, mobile payment"
         ogImage="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80"
       />
-      {/* Navigation */}
-      <header className="fixed top-0 z-50 w-full bg-[rgba(255,255,255,0.8)] backdrop-blur-md border-b border-[#f5f5f7]/30">
-        <div className="max-w-[1200px] mx-auto flex h-12 items-center justify-between px-4">
-          <div className="flex items-center">
-            <Link to="/" className="font-medium text-xl">
-              Arbor Card Quotes
-            </Link>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link to="/">
-              <Button
-                variant="ghost"
-                className="text-sm font-light hover:text-gray-500"
-              >
-                Home
-              </Button>
-            </Link>
-            <Link to="/contact-us">
-              <Button className="rounded-full bg-black text-white hover:bg-gray-800 text-sm px-4">
-                Contact Us
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="pt-24 pb-16">
         <div className="max-w-[1200px] mx-auto px-4">

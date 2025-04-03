@@ -175,11 +175,16 @@ export default function LandingPage() {
           return;
         }
 
-        // Then try to ping Supabase
+        // Then try to ping Supabase with timeout using AbortController
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const response = await fetch(import.meta.env.VITE_SUPABASE_URL || "", {
           method: "HEAD",
-          timeout: 5000,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
         setIsOffline(!response.ok);
       } catch (error) {
         console.log("Connection check failed:", error);
@@ -220,11 +225,15 @@ export default function LandingPage() {
 
     // Check if we're online
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(import.meta.env.VITE_SUPABASE_URL || "", {
         method: "HEAD",
-        timeout: 5000,
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       if (!response.ok) return; // Still offline
 
       // We're online, try to submit using the edge function for better reliability

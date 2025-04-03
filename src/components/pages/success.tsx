@@ -24,10 +24,15 @@ export default function Success() {
 
       // Then try to ping Supabase to confirm connection
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const response = await fetch(import.meta.env.VITE_SUPABASE_URL || "", {
           method: "HEAD",
-          timeout: 5000,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
         setIsOffline(!response.ok);
       } catch (error) {
         console.error("Connection check failed:", error);

@@ -20,6 +20,7 @@ import ForgotPassword from "./components/pages/forgot-password";
 import ResetPassword from "./components/pages/reset-password";
 import { NotificationProvider } from "./components/admin/NotificationProvider";
 import { AuthProvider } from "../supabase/auth";
+import NotFoundPage from "./components/pages/404";
 
 // Import all the new pages
 import AboutUs from "./components/pages/about-us";
@@ -177,6 +178,9 @@ function AppRoutes() {
         {import.meta.env.VITE_TEMPO === "true" && (
           <Route path="/tempobook/*" element={null} />
         )}
+
+        {/* 404 catch-all route */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </NotificationProvider>
   );

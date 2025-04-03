@@ -23,7 +23,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../supabase/auth";
 import { Input } from "../ui/input";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -156,20 +156,109 @@ export default function LandingPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [isOffline, setIsOffline] = useState(false);
+  const [offlineSubmissions, setOfflineSubmissions] = useState<
+    ExtendedFormData[]
+  >(() => {
+    // Load any stored offline submissions from localStorage on component mount
+    const storedSubmissions = localStorage.getItem("offlineLeadSubmissions");
+    return storedSubmissions ? JSON.parse(storedSubmissions) : [];
+  });
 
-    if (!validateForm()) return;
+  // Check connection status on component mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        // First check navigator.onLine as a quick check
+        if (!navigator.onLine) {
+          setIsOffline(true);
+          return;
+        }
 
-    setIsSubmitting(true);
+        // Then try to ping Supabase
+        const response = await fetch(import.meta.env.VITE_SUPABASE_URL || "", {
+          method: "HEAD",
+          timeout: 5000,
+        });
+        setIsOffline(!response.ok);
+      } catch (error) {
+        console.log("Connection check failed:", error);
+        setIsOffline(true);
+      }
+    };
 
+    checkConnection();
+
+    // Set up interval to periodically check connection
+    const intervalId = setInterval(checkConnection, 30000); // Check every 30 seconds
+
+    // Also listen for online/offline events
+    const handleOnline = () => {
+      checkConnection(); // Verify connection when online event fires
+      // Try to submit any stored offline submissions
+      trySubmitOfflineData();
+    };
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Function to try submitting offline data when connection is restored
+  const trySubmitOfflineData = async () => {
+    const storedSubmissions = localStorage.getItem("offlineLeadSubmissions");
+    if (!storedSubmissions) return;
+
+    const submissions: ExtendedFormData[] = JSON.parse(storedSubmissions);
+    if (submissions.length === 0) return;
+
+    // Check if we're online
     try {
-      // Submit to Supabase
-      console.log("Submitting form data:", formData);
-      const { data, error } = await supabase
-        .from("leads")
-        .insert([
+      const response = await fetch(import.meta.env.VITE_SUPABASE_URL || "", {
+        method: "HEAD",
+        timeout: 5000,
+      });
+
+      if (!response.ok) return; // Still offline
+
+      // We're online, try to submit using the edge function for better reliability
+      try {
+        // First try to use the edge function
+        const { data, error } = await supabase.functions.invoke(
+          "sync-offline-data",
           {
+            body: { offlineData: submissions },
+          },
+        );
+
+        if (!error && data?.success) {
+          // Clear all submissions as they've been processed by the edge function
+          localStorage.removeItem("offlineLeadSubmissions");
+          localStorage.removeItem("hasPendingLeadSubmissions");
+          setOfflineSubmissions([]);
+          return;
+        }
+      } catch (edgeFunctionError) {
+        console.error(
+          "Edge function error, falling back to direct submission:",
+          edgeFunctionError,
+        );
+        // Fall back to direct submission if edge function fails
+      }
+
+      // Fallback: We're online, try to submit each stored submission directly
+      let successCount = 0;
+
+      for (const formData of submissions) {
+        try {
+          // Create the lead object
+          const leadData = {
             business_name: formData.businessName,
             contact_name: formData.contactName,
             email: formData.email,
@@ -182,13 +271,114 @@ export default function LandingPage() {
             uses_epos_integration: formData.usesEposIntegration || false,
             uses_booking_app: formData.usesBookingApp || false,
             status: "new",
-          },
-        ])
-        .select();
+          };
 
-      if (error) {
-        console.error("Error submitting form:", error);
-        throw error;
+          const { error } = await supabase.from("leads").insert([leadData]);
+
+          if (!error) successCount++;
+        } catch (error) {
+          console.error("Error submitting stored form:", error);
+        }
+      }
+
+      if (successCount > 0) {
+        // Update the stored submissions
+        const remainingSubmissions = submissions.slice(successCount);
+        localStorage.setItem(
+          "offlineLeadSubmissions",
+          JSON.stringify(remainingSubmissions),
+        );
+        setOfflineSubmissions(remainingSubmissions);
+
+        // Update the flag in localStorage
+        if (remainingSubmissions.length === 0) {
+          localStorage.removeItem("hasPendingLeadSubmissions");
+        }
+      }
+    } catch (error) {
+      console.error("Error checking connection:", error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Create the lead object
+      const leadData = {
+        business_name: formData.businessName,
+        contact_name: formData.contactName,
+        email: formData.email,
+        phone: formData.phone,
+        turnover: formData.turnover,
+        address: formData.address || null,
+        current_provider: formData.currentProvider || null,
+        business_type: formData.businessType || null,
+        epos_provider: formData.eposProvider || null,
+        uses_epos_integration: formData.usesEposIntegration || false,
+        uses_booking_app: formData.usesBookingApp || false,
+        status: "new",
+      };
+
+      // Check if we're offline or if Supabase is unreachable
+      let connectionError = false;
+
+      if (!isOffline) {
+        try {
+          // Try to submit to Supabase
+          console.log("Submitting form data:", formData);
+          const { data, error } = await supabase
+            .from("leads")
+            .insert([leadData])
+            .select();
+
+          if (error) {
+            console.error("Error submitting form:", error);
+            // Check if it's a connection error
+            if (
+              error?.message?.includes("Failed to fetch") ||
+              error?.code === "NETWORK_ERROR" ||
+              error?.message?.includes("ERR_NAME_NOT_RESOLVED")
+            ) {
+              connectionError = true;
+            } else {
+              throw error;
+            }
+          }
+        } catch (error: any) {
+          console.error("Submission error:", error);
+          // Check if it's a connection error
+          if (
+            error?.message?.includes("Failed to fetch") ||
+            error?.code === "NETWORK_ERROR" ||
+            error?.message?.includes("ERR_NAME_NOT_RESOLVED")
+          ) {
+            connectionError = true;
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      // If we're offline or had a connection error, store the submission locally
+      if (isOffline || connectionError) {
+        // Store the form data in localStorage for later submission
+        const updatedSubmissions = [...offlineSubmissions, formData];
+        setOfflineSubmissions(updatedSubmissions);
+        localStorage.setItem(
+          "offlineLeadSubmissions",
+          JSON.stringify(updatedSubmissions),
+        );
+
+        // Set a flag in localStorage to indicate there are pending submissions
+        localStorage.setItem("hasPendingLeadSubmissions", "true");
+
+        // Set offline flag to true if it wasn't already
+        if (!isOffline) setIsOffline(true);
       }
 
       // Show success state
@@ -338,27 +528,61 @@ export default function LandingPage() {
             <div className="bg-white p-6 rounded-xl shadow-lg" id="hero-form">
               {isSuccess ? (
                 <div className="text-center py-12 mt-4">
-                  <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-8 w-8 text-green-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                  <div
+                    className={`h-16 w-16 ${isOffline ? "bg-yellow-100" : "bg-green-100"} rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce`}
+                  >
+                    {isOffline ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-yellow-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-green-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
                   </div>
                   <h3 className="text-2xl font-semibold mb-2">Thank You!</h3>
-                  <p className="text-gray-600 mb-4">
-                    Your quote request has been submitted successfully. One of
-                    our specialists will contact you within 24 hours.
-                  </p>
+                  {isOffline ? (
+                    <div>
+                      <p className="text-gray-600 mb-4">
+                        Your quote request has been saved locally. It will be
+                        submitted automatically when your connection is
+                        restored.
+                      </p>
+                      <p className="text-yellow-600 text-sm mb-4">
+                        Note: We're currently experiencing connection issues.
+                        Please check your internet connection or try again
+                        later.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600 mb-4">
+                      Your quote request has been submitted successfully. One of
+                      our specialists will contact you within 24 hours.
+                    </p>
+                  )}
                   <Button
                     onClick={() => setIsSuccess(false)}
                     className="bg-blue-600 hover:bg-blue-700"

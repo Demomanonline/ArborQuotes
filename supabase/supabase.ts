@@ -56,3 +56,26 @@ export const checkSupabaseConnection = async () => {
     return false;
   }
 };
+
+// Add a function to handle offline mode gracefully
+export const handleSupabaseError = (error: any) => {
+  console.error("Supabase operation failed:", error);
+
+  // Check if it's a network-related error
+  if (
+    error?.message?.includes("Failed to fetch") ||
+    error?.code === "NETWORK_ERROR" ||
+    error?.message?.includes("ERR_NAME_NOT_RESOLVED")
+  ) {
+    return {
+      isOffline: true,
+      message:
+        "Network connection to database unavailable. Please try again later.",
+    };
+  }
+
+  return {
+    isOffline: false,
+    message: error?.message || "An unexpected error occurred",
+  };
+};

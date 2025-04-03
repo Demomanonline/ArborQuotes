@@ -33,11 +33,23 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  // Fallback for demo mode
+  const demoUser = localStorage.getItem("adminUser")
+    ? JSON.parse(localStorage.getItem("adminUser") || "{}")
+    : null;
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    } finally {
+      // Always clear local storage items
+      localStorage.removeItem("adminAuthenticated");
+      localStorage.removeItem("adminUser");
+      navigate("/");
+    }
   };
 
   const navItems = [
@@ -119,15 +131,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center">
               <Avatar className="h-8 w-8">
                 <AvatarImage
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
-                  alt={user?.email || ""}
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || demoUser?.email || "admin"}`}
+                  alt={user?.email || demoUser?.email || ""}
                 />
                 <AvatarFallback>
-                  {user?.email?.[0].toUpperCase() || "U"}
+                  {(user?.email || demoUser?.email)?.[0].toUpperCase() || "A"}
                 </AvatarFallback>
               </Avatar>
               <div className="ml-3">
-                <p className="text-sm font-medium">{user?.email}</p>
+                <p className="text-sm font-medium">
+                  {user?.email || demoUser?.email || "Admin"}
+                </p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>
             </div>
@@ -159,11 +173,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <Button variant="ghost" className="ml-4">
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
-                      alt={user?.email || ""}
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || demoUser?.email || "admin"}`}
+                      alt={user?.email || demoUser?.email || ""}
                     />
                     <AvatarFallback>
-                      {user?.email?.[0].toUpperCase() || "U"}
+                      {(user?.email || demoUser?.email)?.[0].toUpperCase() ||
+                        "A"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

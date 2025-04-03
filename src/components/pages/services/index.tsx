@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { SEO } from "@/components/ui/seo";
@@ -7,6 +7,29 @@ import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 
 export default function ServicesIndex() {
+  const navigate = useNavigate();
+
+  // Handle link clicks to scroll to top of content or specific element
+  const handleLinkClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+    elementId?: string,
+  ) => {
+    e.preventDefault();
+    navigate(path);
+    // Scroll to element or top with a slight delay to ensure navigation completes
+    setTimeout(() => {
+      if (elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
+  };
+
   const services = [
     {
       title: "Countertop Terminals",
@@ -125,11 +148,13 @@ export default function ServicesIndex() {
                       </p>
                     </div>
                     <div>
-                      <Link to={service.link}>
-                        <Button className={`${service.buttonColor} text-white`}>
-                          Learn More
-                        </Button>
-                      </Link>
+                      <a
+                        href={service.link}
+                        onClick={(e) => handleLinkClick(e, service.link)}
+                        className={`${service.buttonColor} text-white inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-primary-foreground shadow h-9 px-4 py-2`}
+                      >
+                        Learn More
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -178,11 +203,13 @@ export default function ServicesIndex() {
               Fill out our quick form to receive personalized quotes for payment
               solutions tailored to your business needs.
             </p>
-            <Link to="/">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-md">
-                Request a Quote
-              </Button>
-            </Link>
+            <a
+              href="/"
+              onClick={(e) => handleLinkClick(e, "/", "hero-form")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-md inline-flex items-center justify-center whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-primary-foreground shadow"
+            >
+              Request a Quote
+            </a>
           </div>
         </div>
       </main>

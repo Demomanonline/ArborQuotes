@@ -60,6 +60,19 @@ export default function LandingPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // Handle link clicks to scroll to top of content
+  const handleLinkClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+  ) => {
+    e.preventDefault();
+    navigate(path);
+    // Scroll to top with a slight delay to ensure navigation completes
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
+  };
+
   const [formData, setFormData] = useState<ExtendedFormData>({
     businessName: "",
     contactName: "",
@@ -126,8 +139,15 @@ export default function LandingPage() {
       errors.turnover = "Annual turnover is required";
 
     if (showExtendedFields) {
-      if (!formData.address.trim())
+      if (!formData.address.trim()) {
         errors.address = "Business address is required";
+      } else if (
+        !/^.+([A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2})$/i.test(
+          formData.address,
+        )
+      ) {
+        errors.address = "Please include a valid UK postcode (e.g. AB12 3CD)";
+      }
       if (!formData.businessType.trim())
         errors.businessType = "Business type is required";
     }
@@ -174,6 +194,21 @@ export default function LandingPage() {
       // Show success state
       setIsSuccess(true);
       setShowExtendedFields(false);
+
+      // Scroll to top of form with a slight delay to ensure UI updates
+      setTimeout(() => {
+        const formElement = document.getElementById("hero-form");
+        if (formElement) {
+          // Adjust scroll position to account for header height
+          const headerHeight = 80; // Approximate header height
+          const formRect = formElement.getBoundingClientRect();
+          const absoluteFormTop =
+            window.pageYOffset + formRect.top - headerHeight;
+          window.scrollTo({ top: absoluteFormTop, behavior: "smooth" });
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }, 100);
 
       // Reset form after 8 seconds
       setTimeout(() => {
@@ -302,7 +337,7 @@ export default function LandingPage() {
 
             <div className="bg-white p-6 rounded-xl shadow-lg" id="hero-form">
               {isSuccess ? (
-                <div className="text-center py-8">
+                <div className="text-center py-12 mt-4">
                   <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -475,7 +510,7 @@ export default function LandingPage() {
                               htmlFor="address"
                               className="block text-sm font-medium text-gray-700 mb-1"
                             >
-                              Business Address
+                              Business Address (including UK Postcode)
                             </label>
                             <Input
                               id="address"
@@ -485,7 +520,7 @@ export default function LandingPage() {
                               className={
                                 formErrors.address ? "border-red-500" : ""
                               }
-                              placeholder="123 Business St, London"
+                              placeholder="123 Business St, London, AB12 3CD"
                               required
                             />
                             {formErrors.address && (
@@ -501,13 +536,32 @@ export default function LandingPage() {
                             >
                               Current Provider (if any)
                             </label>
-                            <Input
+                            <select
                               id="currentProvider"
                               name="currentProvider"
                               value={formData.currentProvider}
                               onChange={handleInputChange}
-                              placeholder="e.g. WorldPay, Stripe"
-                            />
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <option value="">
+                                Select current provider (if any)
+                              </option>
+                              <option value="Worldpay">Worldpay</option>
+                              <option value="Teya">Teya</option>
+                              <option value="Zettle">Zettle</option>
+                              <option value="Paymentsave">Paymentsave</option>
+                              <option value="AIB">AIB</option>
+                              <option value="Paymentsense">Paymentsense</option>
+                              <option value="Barclaycard">Barclaycard</option>
+                              <option value="Sumup">Sumup</option>
+                              <option value="Square">Square</option>
+                              <option value="Lloydscardnet">
+                                Lloydscardnet
+                              </option>
+                              <option value="Takepayments">Takepayments</option>
+                              <option value="RMS">RMS</option>
+                              <option value="Other">Other</option>
+                            </select>
                           </div>
                         </div>
 
@@ -622,19 +676,21 @@ export default function LandingPage() {
 
                     <p className="text-xs text-gray-500 text-center mt-2">
                       By submitting this form, you agree to our{" "}
-                      <Link
-                        to="/terms-of-service"
+                      <a
+                        href="/terms-of-service"
                         className="text-blue-600 hover:underline"
+                        onClick={(e) => handleLinkClick(e, "/terms-of-service")}
                       >
                         Terms of Service
-                      </Link>{" "}
+                      </a>{" "}
                       and{" "}
-                      <Link
-                        to="/privacy-policy"
+                      <a
+                        href="/privacy-policy"
                         className="text-blue-600 hover:underline"
+                        onClick={(e) => handleLinkClick(e, "/privacy-policy")}
                       >
                         Privacy Policy
-                      </Link>
+                      </a>
                       .
                     </p>
                   </form>
@@ -726,12 +782,15 @@ export default function LandingPage() {
                       <span className="text-sm">Multiple payment methods</span>
                     </li>
                   </ul>
-                  <Link
-                    to="/services/countertop-terminals"
+                  <a
+                    href="/services/countertop-terminals"
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-primary-foreground shadow h-9 px-4 py-2 w-full bg-blue-600 hover:bg-blue-700"
+                    onClick={(e) =>
+                      handleLinkClick(e, "/services/countertop-terminals")
+                    }
                   >
                     Learn More
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -801,12 +860,15 @@ export default function LandingPage() {
                       <span className="text-sm">Table-side payments</span>
                     </li>
                   </ul>
-                  <Link
-                    to="/services/portable-terminals"
+                  <a
+                    href="/services/portable-terminals"
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-primary-foreground shadow h-9 px-4 py-2 w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={(e) =>
+                      handleLinkClick(e, "/services/portable-terminals")
+                    }
                   >
                     Learn More
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -874,12 +936,15 @@ export default function LandingPage() {
                       <span className="text-sm">Low transaction fees</span>
                     </li>
                   </ul>
-                  <Link
-                    to="/services/mobile-card-readers"
+                  <a
+                    href="/services/mobile-card-readers"
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-primary-foreground shadow h-9 px-4 py-2 w-full bg-green-600 hover:bg-green-700"
+                    onClick={(e) =>
+                      handleLinkClick(e, "/services/mobile-card-readers")
+                    }
                   >
                     Learn More
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -947,12 +1012,13 @@ export default function LandingPage() {
                       <span className="text-sm">Advanced reporting</span>
                     </li>
                   </ul>
-                  <Link
-                    to="/services/pos-systems"
+                  <a
+                    href="/services/pos-systems"
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 text-primary-foreground shadow h-9 px-4 py-2 w-full bg-orange-600 hover:bg-orange-700"
+                    onClick={(e) => handleLinkClick(e, "/services/pos-systems")}
                   >
                     Learn More
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>
@@ -1068,7 +1134,7 @@ export default function LandingPage() {
 
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-2">
-                <AccordionTrigger className="text-left">
+                <AccordionTrigger className="text-left text-2xl">
                   Is there a fee for using your service?
                 </AccordionTrigger>
                 <AccordionContent>
@@ -1080,7 +1146,7 @@ export default function LandingPage() {
               </AccordionItem>
 
               <AccordionItem value="item-3">
-                <AccordionTrigger className="text-left">
+                <AccordionTrigger className="text-left text-2xl">
                   How long does it take to receive quotes?
                 </AccordionTrigger>
                 <AccordionContent>
@@ -1094,7 +1160,7 @@ export default function LandingPage() {
               </AccordionItem>
 
               <AccordionItem value="item-4">
-                <AccordionTrigger className="text-left">
+                <AccordionTrigger className="text-left text-2xl">
                   What types of businesses do you work with?
                 </AccordionTrigger>
                 <AccordionContent>
@@ -1109,7 +1175,7 @@ export default function LandingPage() {
               </AccordionItem>
 
               <AccordionItem value="item-5">
-                <AccordionTrigger className="text-left">
+                <AccordionTrigger className="text-left text-2xl">
                   Can I switch from my current payment provider?
                 </AccordionTrigger>
                 <AccordionContent>
@@ -1125,7 +1191,7 @@ export default function LandingPage() {
               </AccordionItem>
 
               <AccordionItem value="item-6">
-                <AccordionTrigger className="text-left">
+                <AccordionTrigger className="text-left text-2xl">
                   What information do I need to provide?
                 </AccordionTrigger>
                 <AccordionContent>

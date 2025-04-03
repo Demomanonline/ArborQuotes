@@ -1,11 +1,26 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
 
 export default function BlogIndex() {
+  const navigate = useNavigate();
+
+  // Handle link clicks to scroll to top of content
+  const handleLinkClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+  ) => {
+    e.preventDefault();
+    navigate(path);
+    // Scroll to top with a slight delay to ensure navigation completes
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
+  };
+
   const blogPosts = [
     {
       id: "choosing-right-card-terminal",
@@ -101,13 +116,16 @@ export default function BlogIndex() {
                 key={post.id}
                 className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               >
-                <Link to={`/blog/${post.id}`}>
+                <a
+                  href={`/blog/${post.id}`}
+                  onClick={(e) => handleLinkClick(e, `/blog/${post.id}`)}
+                >
                   <img
                     src={post.image}
                     alt={post.title}
                     className="w-full h-48 object-cover"
                   />
-                </Link>
+                </a>
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
@@ -115,11 +133,14 @@ export default function BlogIndex() {
                     </span>
                     <span className="text-xs text-gray-500">{post.date}</span>
                   </div>
-                  <Link to={`/blog/${post.id}`}>
+                  <a
+                    href={`/blog/${post.id}`}
+                    onClick={(e) => handleLinkClick(e, `/blog/${post.id}`)}
+                  >
                     <h3 className="text-xl font-semibold mb-2 hover:text-blue-600 transition-colors">
                       {post.title}
                     </h3>
-                  </Link>
+                  </a>
                   <p className="text-gray-600 mb-4 line-clamp-3">
                     {post.excerpt}
                   </p>
@@ -127,8 +148,9 @@ export default function BlogIndex() {
                     <span className="text-sm text-gray-500">
                       By {post.author}
                     </span>
-                    <Link
-                      to={`/blog/${post.id}`}
+                    <a
+                      href={`/blog/${post.id}`}
+                      onClick={(e) => handleLinkClick(e, `/blog/${post.id}`)}
                       className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
                     >
                       Read More
@@ -146,7 +168,7 @@ export default function BlogIndex() {
                           d="M9 5l7 7-7 7"
                         />
                       </svg>
-                    </Link>
+                    </a>
                   </div>
                 </div>
               </div>

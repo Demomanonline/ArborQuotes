@@ -1,7 +1,21 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Footer() {
+  const navigate = useNavigate();
+
+  // Handle link clicks to scroll to top of content
+  const handleLinkClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    path: string,
+  ) => {
+    e.preventDefault();
+    navigate(path);
+    // Scroll to top with a slight delay to ensure navigation completes
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 100);
+  };
   return (
     <footer className="bg-gray-900 py-12 text-gray-300">
       <div className="max-w-[1200px] mx-auto px-4">
@@ -18,49 +32,68 @@ export default function Footer() {
             <h4 className="font-medium text-white text-lg mb-4">Services</h4>
             <ul className="space-y-2">
               <li>
-                <Link
-                  to="/services/countertop-terminals"
+                <a
+                  href="/services/countertop-terminals"
                   className="hover:text-white"
+                  onClick={(e) =>
+                    handleLinkClick(e, "/services/countertop-terminals")
+                  }
                 >
                   Countertop Terminals
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/services/portable-terminals"
+                <a
+                  href="/services/portable-terminals"
                   className="hover:text-white"
+                  onClick={(e) =>
+                    handleLinkClick(e, "/services/portable-terminals")
+                  }
                 >
                   Portable Terminals
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/services/mobile-card-readers"
+                <a
+                  href="/services/mobile-card-readers"
                   className="hover:text-white"
+                  onClick={(e) =>
+                    handleLinkClick(e, "/services/mobile-card-readers")
+                  }
                 >
                   Mobile Card Readers
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/services/pos-systems" className="hover:text-white">
-                  POS Systems
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/services/online-payments"
+                <a
+                  href="/services/pos-systems"
                   className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/services/pos-systems")}
+                >
+                  POS Systems
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/services/online-payments"
+                  className="hover:text-white"
+                  onClick={(e) =>
+                    handleLinkClick(e, "/services/online-payments")
+                  }
                 >
                   Online Payments
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/services/dojo-restaurant-app"
+                <a
+                  href="/services/dojo-restaurant-app"
                   className="hover:text-white"
+                  onClick={(e) =>
+                    handleLinkClick(e, "/services/dojo-restaurant-app")
+                  }
                 >
                   Dojo Restaurant App
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -68,19 +101,31 @@ export default function Footer() {
             <h4 className="font-medium text-white text-lg mb-4">Company</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/about-us" className="hover:text-white">
+                <a
+                  href="/about-us"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/about-us")}
+                >
                   About Us
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/blog" className="hover:text-white">
+                <a
+                  href="/blog"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/blog")}
+                >
                   Blog
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/contact-us" className="hover:text-white">
+                <a
+                  href="/contact-us"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/contact-us")}
+                >
                   Contact Us
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -88,32 +133,49 @@ export default function Footer() {
             <h4 className="font-medium text-white text-lg mb-4">Legal</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/privacy-policy" className="hover:text-white">
+                <a
+                  href="/privacy-policy"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/privacy-policy")}
+                >
                   Privacy Policy
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/terms-of-service" className="hover:text-white">
+                <a
+                  href="/terms-of-service"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/terms-of-service")}
+                >
                   Terms of Service
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/cookie-policy" className="hover:text-white">
+                <a
+                  href="/cookie-policy"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/cookie-policy")}
+                >
                   Cookie Policy
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/gdpr-compliance" className="hover:text-white">
+                <a
+                  href="/gdpr-compliance"
+                  className="hover:text-white"
+                  onClick={(e) => handleLinkClick(e, "/gdpr-compliance")}
+                >
                   GDPR Compliance
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  to="/admin-login"
+                <a
+                  href="/admin-login"
                   className="hover:text-white text-xs opacity-50"
+                  onClick={(e) => handleLinkClick(e, "/admin-login")}
                 >
                   Admin Login
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

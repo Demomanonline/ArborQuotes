@@ -121,7 +121,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+        className={`fixed inset-y-0 left-0 z-40 w-72 sm:w-64 bg-white shadow-lg transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <div className="flex flex-col h-full">
           <div className="p-4 border-b">
@@ -178,10 +178,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="lg:pl-64 w-full">
         {/* Header */}
-        <header className="bg-white shadow-sm sticky top-0 z-30">
-          <div className="flex items-center justify-end h-16 px-4 lg:px-8">
+        <header className="bg-white shadow-sm sticky top-0 z-30 w-full">
+          <div className="flex items-center justify-end h-16 px-2 sm:px-4 lg:px-8">
             {/* Notifications */}
             <div className="relative">
               <Button
@@ -199,7 +199,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </Button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-64 sm:w-80 bg-white rounded-lg shadow-lg overflow-hidden z-50">
                   <div className="p-3 border-b flex justify-between items-center">
                     <h3 className="font-medium">Notifications</h3>
                     <Button
@@ -293,7 +293,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-8">{children}</main>
+        <main className="p-3 sm:p-4 lg:p-8 overflow-x-hidden">{children}</main>
       </div>
 
       {/* Overlay for mobile sidebar */}

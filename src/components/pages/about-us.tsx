@@ -45,16 +45,16 @@ export default function AboutUs() {
                 and find solutions that truly fit their needs.
               </p>
               <p className="text-gray-600 mb-4">
-                Our founder, having worked in the payment industry for over 15
-                years, saw firsthand how businesses were often sold payment
-                solutions that weren't right for them, resulting in unnecessary
-                costs and frustration.
+                Our founder, having worked in the IT industry for over 25 years
+                and in the payment industry for over 5 years, saw firsthand how
+                businesses were often sold payment solutions that weren't right
+                for them, resulting in unnecessary costs and frustration.
               </p>
               <p className="text-gray-600">
-                Today, we've helped thousands of businesses across the UK find
-                the perfect payment solution, saving them time, money, and
-                hassle. Our commitment to unbiased, transparent advice has made
-                us a trusted partner for businesses of all sizes.
+                Today, we've helped of businesses across the UK find the perfect
+                payment solution, saving them time, money, and hassle. Our
+                commitment to transparent advice has made us a trusted partner
+                for businesses of all sizes.
               </p>
             </div>
           </div>
@@ -70,10 +70,11 @@ export default function AboutUs() {
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm">
-                <h3 className="font-semibold text-lg mb-3">Independence</h3>
+                <h3 className="font-semibold text-lg mb-3">Quality</h3>
                 <p className="text-gray-600">
-                  As an independent comparison service, we provide unbiased
-                  recommendations based solely on what's best for your business.
+                  As a partner of the UK largest payment provider. You can be
+                  reassured, we only offer payments solutions with highest
+                  industry standards.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -91,8 +92,8 @@ export default function AboutUs() {
               Ready to Find Your Perfect Payment Solution?
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-              Join thousands of businesses who have found the right payment
-              solution through Arbor Card Quotes.
+              Join UK businesses who have found the right payment solution
+              through Arbor Card Quotes.
             </p>
             <Link to="/">
               <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-md">

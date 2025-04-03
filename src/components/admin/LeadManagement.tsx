@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../../../supabase/supabase";
+import { supabase, checkSupabaseConnection } from "../../../supabase/supabase";
 import { Link } from "react-router-dom";
 import {
   Table,
@@ -28,6 +28,9 @@ import {
   XCircle,
   PhoneCall,
   ExternalLink,
+  AlertTriangle,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tables } from "@/types/supabase";
@@ -42,11 +45,38 @@ export default function LeadManagement() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortDirection, setSortDirection] = useState<string>("desc");
+  const [connectionStatus, setConnectionStatus] = useState<boolean>(true);
   const { toast } = useToast();
+
+  // Check connection status on component mount
+  useEffect(() => {
+    const checkConnection = async () => {
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected);
+      if (!isConnected) {
+        toast({
+          title: "Connection Issue",
+          description:
+            "Unable to connect to the database. Some features may be limited.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    checkConnection();
+  }, []);
 
   const fetchLeads = async () => {
     setIsLoading(true);
     try {
+      // Check connection before attempting to fetch
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected);
+
+      if (!isConnected) {
+        throw new Error("Database connection unavailable");
+      }
+
       let query = supabase
         .from("leads")
         .select("*")
@@ -91,6 +121,15 @@ export default function LeadManagement() {
 
   const handleStatusChange = async (leadId: number, newStatus: string) => {
     try {
+      if (!connectionStatus) {
+        toast({
+          title: "Connection Error",
+          description: "Cannot update lead status while offline.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("leads")
         .update({ status: newStatus })
@@ -203,17 +242,44 @@ export default function LeadManagement() {
     }
   };
 
+  // Format date and time properly
+  const formatDateTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return {
+        date: date.toLocaleDateString(),
+        time: date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+    } catch (e) {
+      return { date: "Invalid date", time: "" };
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Lead Management</h1>
         <div className="flex space-x-2">
+          {!connectionStatus && (
+            <Badge
+              variant="outline"
+              className="bg-yellow-50 text-yellow-800 border-yellow-300 mr-2 px-3 py-1"
+            >
+              <WifiOff className="w-4 h-4 mr-2 text-yellow-600" />
+              Offline Mode
+            </Badge>
+          )}
           <Button
             variant="outline"
             onClick={() => fetchLeads()}
             disabled={loading}
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
           <Button variant="outline" onClick={exportToCSV}>
@@ -302,83 +368,89 @@ export default function LeadManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
-              <TableRow
-                key={lead.id}
-                className="cursor-pointer hover:bg-gray-50"
-              >
-                <TableCell className="font-medium">
-                  <Link
-                    to={`/admin-dashboard/leads/${lead.id}`}
-                    className="flex items-center text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    {lead.business_name}
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/admin-dashboard/leads/${lead.id}`}
-                    className="block"
-                  >
-                    <div>{lead.contact_name}</div>
-                    <div className="text-sm text-gray-500">{lead.email}</div>
-                    <div className="text-sm text-gray-500">{lead.phone}</div>
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/admin-dashboard/leads/${lead.id}`}
-                    className="block"
-                  >
-                    {lead.business_type}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/admin-dashboard/leads/${lead.id}`}
-                    className="block"
-                  >
-                    £{lead.turnover}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/admin-dashboard/leads/${lead.id}`}
-                    className="block"
-                  >
-                    {getStatusBadge(lead.status || "new")}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/admin-dashboard/leads/${lead.id}`}
-                    className="block"
-                  >
-                    {new Date(lead.created_at || "").toLocaleDateString()}{" "}
-                    {new Date(lead.created_at || "").toLocaleTimeString()}
-                  </Link>
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Select
-                    value={lead.status || "new"}
-                    onValueChange={(value) =>
-                      handleStatusChange(lead.id as number, value)
-                    }
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Change status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="disqualified">Disqualified</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-              </TableRow>
-            ))}
+            {leads.map((lead) => {
+              const { date, time } = formatDateTime(lead.created_at || "");
+              return (
+                <TableRow
+                  key={lead.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  <TableCell className="font-medium">
+                    <Link
+                      to={`/admin-dashboard/leads/${lead.id}`}
+                      className="flex items-center text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {lead.business_name}
+                      <ExternalLink className="ml-1 h-3 w-3" />
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      to={`/admin-dashboard/leads/${lead.id}`}
+                      className="block"
+                    >
+                      <div>{lead.contact_name}</div>
+                      <div className="text-sm text-gray-500">{lead.email}</div>
+                      <div className="text-sm text-gray-500">{lead.phone}</div>
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      to={`/admin-dashboard/leads/${lead.id}`}
+                      className="block"
+                    >
+                      {lead.business_type}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      to={`/admin-dashboard/leads/${lead.id}`}
+                      className="block"
+                    >
+                      £{lead.turnover}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      to={`/admin-dashboard/leads/${lead.id}`}
+                      className="block"
+                    >
+                      {getStatusBadge(lead.status || "new")}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      to={`/admin-dashboard/leads/${lead.id}`}
+                      className="block"
+                    >
+                      <div>{date}</div>
+                      <div className="text-sm text-gray-500">{time}</div>
+                    </Link>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={lead.status || "new"}
+                      onValueChange={(value) =>
+                        handleStatusChange(lead.id as number, value)
+                      }
+                      disabled={!connectionStatus}
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Change status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
+                        <SelectItem value="disqualified">
+                          Disqualified
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

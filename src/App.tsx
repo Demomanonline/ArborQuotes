@@ -19,6 +19,7 @@ import PasswordResetConfirmation from "./components/auth/PasswordResetConfirmati
 import ForgotPassword from "./components/pages/forgot-password";
 import ResetPassword from "./components/pages/reset-password";
 import { NotificationProvider } from "./components/admin/NotificationProvider";
+import { AuthProvider } from "../supabase/auth";
 
 // Import all the new pages
 import AboutUs from "./components/pages/about-us";
@@ -183,10 +184,12 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Suspense fallback={<LoadingScreen text="Loading application..." />}>
-      <AppRoutes />
-      <Toaster />
-    </Suspense>
+    <AuthProvider>
+      <Suspense fallback={<LoadingScreen text="Loading application..." />}>
+        <AppRoutes />
+        <Toaster />
+      </Suspense>
+    </AuthProvider>
   );
 }
 

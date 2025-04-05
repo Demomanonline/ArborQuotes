@@ -11,6 +11,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+console.log("Initializing Supabase client with URL:", supabaseUrl);
+
 // Create the Supabase client with additional options for better reliability
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -22,57 +24,44 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       "x-application-name": "arbor-card-quotes",
     },
-    // Add fetch options to improve reliability
-    fetch: (url, options = {}) => {
-      const fetchOptions = {
-        ...options,
-        // Add timeout to prevent hanging requests
-        signal:
-          options.signal ||
-          (typeof AbortController !== "undefined"
-            ? new AbortController().signal
-            : undefined),
-      };
-
-      return fetch(url, fetchOptions);
-    },
   },
   realtime: {
-    // Add reconnection parameters for WebSocket connections
     params: {
       eventsPerSecond: 2,
     },
   },
 });
 
+// Test the Supabase connection on load
+(async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    console.log("Supabase connection test:", error ? "Failed" : "Successful");
+    if (error) {
+      console.error("Supabase connection error:", error);
+    }
+  } catch (e) {
+    console.error("Supabase initialization error:", e);
+  }
+})();
+
 // Add a helper function to check connection status
 export const checkSupabaseConnection = async () => {
   try {
-    // First try a simple fetch to the Supabase URL
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    console.log("Checking Supabase connection to:", supabaseUrl);
 
-    try {
-      const response = await fetch(supabaseUrl, {
-        method: "HEAD",
-        signal: controller.signal,
-        // Add cache busting to prevent cached responses
-        headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
-      });
-      clearTimeout(timeoutId);
-      if (response.ok) return true;
-    } catch (fetchError) {
-      console.log("Fetch connection test failed:", fetchError);
-      // Continue to the next test if fetch fails
+    // Try a simple auth check first (doesn't require database access)
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+      console.error("Supabase auth check failed:", error);
+      return false;
     }
 
-    // If fetch fails, try a database query as backup
-    const { error } = await supabase
-      .from("leads")
-      .select("count", { count: "exact", head: true });
-    return !error;
+    console.log("Supabase connection successful");
+    return true;
   } catch (e) {
-    console.error("Supabase connection check failed:", e);
+    console.error("Supabase connection check failed with exception:", e);
     return false;
   }
 };

@@ -1,9 +1,11 @@
-import React, {
+"use client";
+
+import {
   createContext,
   useContext,
   useState,
   useEffect,
-  ReactNode,
+  type ReactNode,
 } from "react";
 import { supabase } from "../../../supabase/supabase";
 
@@ -100,56 +102,60 @@ const NotificationProvider = ({ children }: NotificationProviderProps) => {
     }
 
     // Set up real-time subscription for leads table
-    const leadsSubscription = supabase
-      .channel("leads-changes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          const newLead = payload.new;
-          const notification: Notification = {
-            id: Date.now().toString(),
-            title: "New lead submitted",
-            message: `New lead from ${newLead.business_name || "Unknown Business"} has been received.`,
-            leadId: newLead.id,
-            read: false,
-            createdAt: new Date().toISOString(),
-          };
+    try {
+      const leadsSubscription = supabase
+        .channel("leads-changes")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "leads" },
+          (payload) => {
+            const newLead = payload.new;
+            const notification: Notification = {
+              id: Date.now().toString(),
+              title: "New lead submitted",
+              message: `New lead from ${newLead.business_name || "Unknown Business"} has been received.`,
+              leadId: newLead.id,
+              read: false,
+              createdAt: new Date().toISOString(),
+            };
 
-          setNotifications((prev) => [notification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-        },
-      )
-      .subscribe();
+            setNotifications((prev) => [notification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+          },
+        )
+        .subscribe();
 
-    // Set up real-time subscription for contact_leads table
-    const contactLeadsSubscription = supabase
-      .channel("contact-leads-changes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "contact_leads" },
-        (payload) => {
-          const newLead = payload.new;
-          const notification: Notification = {
-            id: Date.now().toString(),
-            title: "New contact form submission",
-            message: `New message from ${newLead.name || "Unknown"} has been received.`,
-            leadId: newLead.id,
-            read: false,
-            createdAt: new Date().toISOString(),
-          };
+      // Set up real-time subscription for contact_leads table
+      const contactLeadsSubscription = supabase
+        .channel("contact-leads-changes")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "contact_leads" },
+          (payload) => {
+            const newLead = payload.new;
+            const notification: Notification = {
+              id: Date.now().toString(),
+              title: "New contact form submission",
+              message: `New message from ${newLead.name || "Unknown"} has been received.`,
+              leadId: newLead.id,
+              read: false,
+              createdAt: new Date().toISOString(),
+            };
 
-          setNotifications((prev) => [notification, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-        },
-      )
-      .subscribe();
+            setNotifications((prev) => [notification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+          },
+        )
+        .subscribe();
 
-    // Clean up subscriptions
-    return () => {
-      supabase.removeChannel(leadsSubscription);
-      supabase.removeChannel(contactLeadsSubscription);
-    };
+      // Clean up subscriptions
+      return () => {
+        supabase.removeChannel(leadsSubscription);
+        supabase.removeChannel(contactLeadsSubscription);
+      };
+    } catch (error) {
+      console.error("Error setting up realtime subscriptions:", error);
+    }
   }, []);
 
   // Save notifications to localStorage whenever they change

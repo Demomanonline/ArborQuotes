@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase, checkSupabaseConnection } from "../../../supabase/supabase";
+import { RefreshCw } from "lucide-react";
 
 type Contact = {
   id: number;
@@ -25,15 +27,67 @@ export default function ContactLeads() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
+  const [connectionStatus, setConnectionStatus] = useState(true);
 
   useEffect(() => {
+    // Check connection status on component mount
+    const checkConnection = async () => {
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected);
+      if (!isConnected) {
+        toast({
+          title: "Connection Issue",
+          description: "Unable to connect to the database. Using local data.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    checkConnection();
     fetchContacts();
   }, []);
 
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      // Get contacts from localStorage or use sample data
+      console.log("Fetching contacts...");
+
+      // Check connection before attempting to fetch
+      const isConnected = await checkSupabaseConnection();
+      setConnectionStatus(isConnected);
+
+      // Try to fetch from Supabase if connected
+      if (isConnected) {
+        try {
+          console.log("Attempting to fetch contacts from Supabase...");
+          const { data, error } = await supabase
+            .from("contact_leads")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            throw error;
+          }
+
+          if (data && data.length > 0) {
+            console.log(
+              "Successfully fetched contacts from Supabase:",
+              data.length,
+            );
+            setContacts(data);
+            setLoading(false);
+            return;
+          } else {
+            console.log("No contacts found in Supabase, using local data");
+          }
+        } catch (error) {
+          console.error("Error fetching from Supabase:", error);
+          // Fall back to local data
+        }
+      }
+
+      // Fall back to localStorage or sample data if Supabase fetch fails or returns no data
+      console.log("Using local data for contacts");
       const storedContacts = localStorage.getItem("contactLeads");
       const parsedContacts = storedContacts ? JSON.parse(storedContacts) : [];
 
@@ -109,14 +163,41 @@ export default function ContactLeads() {
     }
   };
 
-  const updateContactStatus = (id: number, newStatus: string) => {
+  const updateContactStatus = async (id: number, newStatus: string) => {
     try {
-      // Update local state only since we're not using Supabase in this demo
+      // Check if we're connected to Supabase
+      if (connectionStatus) {
+        try {
+          // Try to update in Supabase first
+          const { error } = await supabase
+            .from("contact_leads")
+            .update({ status: newStatus })
+            .eq("id", id);
+
+          if (error) throw error;
+
+          console.log("Successfully updated contact status in Supabase");
+        } catch (error) {
+          console.error(
+            "Error updating in Supabase, falling back to local update:",
+            error,
+          );
+          // Fall back to local update if Supabase update fails
+        }
+      }
+
+      // Always update local state (as a fallback or to keep UI in sync)
       setContacts(
         contacts.map((contact) =>
           contact.id === id ? { ...contact, status: newStatus } : contact,
         ),
       );
+
+      // Store updated contacts in localStorage
+      const updatedContacts = contacts.map((contact) =>
+        contact.id === id ? { ...contact, status: newStatus } : contact,
+      );
+      localStorage.setItem("contactLeads", JSON.stringify(updatedContacts));
 
       toast({
         title: "Status Updated",
@@ -179,6 +260,9 @@ export default function ContactLeads() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Contact Leads</h2>
         <Button onClick={fetchContacts} disabled={loading}>
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
           {loading ? "Loading..." : "Refresh"}
         </Button>
       </div>

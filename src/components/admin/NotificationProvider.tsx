@@ -32,7 +32,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined,
 );
 
-const useNotifications = () => {
+function useNotifications() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error(
@@ -40,13 +40,13 @@ const useNotifications = () => {
     );
   }
   return context;
-};
+}
 
 type NotificationProviderProps = {
   children: ReactNode;
 };
 
-const NotificationProvider = ({ children }: NotificationProviderProps) => {
+function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -215,6 +215,6 @@ const NotificationProvider = ({ children }: NotificationProviderProps) => {
       {children}
     </NotificationContext.Provider>
   );
-};
+}
 
 export { NotificationProvider, useNotifications };

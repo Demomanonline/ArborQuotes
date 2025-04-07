@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase, checkSupabaseConnection } from "../../../supabase/supabase";
 
 type Contact = {
   id: number;
@@ -25,76 +26,78 @@ export default function ContactDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Sample data for the contact
-  const [contact, setContact] = useState<Contact>({
-    id: parseInt(contactId || "1"),
-    name:
-      contactId === "1"
-        ? "John Smith"
-        : contactId === "2"
-          ? "Sarah Johnson"
-          : contactId === "3"
-            ? "Michael Brown"
-            : contactId === "4"
-              ? "Emma Wilson"
-              : "David Lee",
-    email:
-      contactId === "1"
-        ? "john.smith@example.com"
-        : contactId === "2"
-          ? "sarah.j@coffeeheaven.co.uk"
-          : contactId === "3"
-            ? "m.brown@restaurantgroup.com"
-            : contactId === "4"
-              ? "emma@wilsonbakery.com"
-              : "david.lee@techstartup.io",
-    phone:
-      contactId === "1"
-        ? "07700 900123"
-        : contactId === "2"
-          ? "07700 900456"
-          : contactId === "3"
-            ? "07700 900789"
-            : contactId === "4"
-              ? "07700 900234"
-              : "07700 900567",
-    message:
-      contactId === "1"
-        ? "I'm interested in learning more about your countertop terminals for my retail store."
-        : contactId === "2"
-          ? "We're opening a new coffee shop and need a complete payment solution including mobile and countertop options."
-          : contactId === "3"
-            ? "Looking for information about your restaurant POS systems and integrated payment solutions."
-            : contactId === "4"
-              ? "Need a portable payment terminal for our bakery with multiple locations."
-              : "Interested in online payment gateway options for our e-commerce platform.",
-    status:
-      contactId === "1"
-        ? "new"
-        : contactId === "2"
-          ? "contacted"
-          : contactId === "3"
-            ? "qualified"
-            : contactId === "4"
-              ? "closed"
-              : "new",
-    created_at:
-      contactId === "1"
-        ? "2023-10-15T14:30:00"
-        : contactId === "2"
-          ? "2023-10-14T09:15:00"
-          : contactId === "3"
-            ? "2023-10-12T16:45:00"
-            : contactId === "4"
-              ? "2023-10-10T11:20:00"
-              : "2023-10-09T13:50:00",
-    notes: "",
-  });
-
-  const [notes, setNotes] = useState(contact.notes || "");
-  const [status, setStatus] = useState(contact.status);
+  const [contact, setContact] = useState<Contact | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("new");
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContact, setEditedContact] = useState(contact);
+  const [editedContact, setEditedContact] = useState<Contact | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState(true);
+
+  useEffect(() => {
+    // Check connection status and fetch contact data on component mount
+    const fetchContactData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Check connection to Supabase
+        const isConnected = await checkSupabaseConnection();
+        setConnectionStatus(isConnected);
+
+        if (!isConnected) {
+          toast({
+            title: "Connection Issue",
+            description: "Unable to connect to the database.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          setError("Database connection error. Please try again later.");
+          return;
+        }
+
+        if (!contactId) {
+          setError("Contact ID is missing");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch contact data from Supabase
+        const { data, error } = await supabase
+          .from("contact_leads")
+          .select("*")
+          .eq("id", contactId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching contact:", error);
+          setError("Failed to load contact details. Please try again.");
+          setLoading(false);
+          return;
+        }
+
+        if (!data) {
+          setError("Contact not found");
+          setLoading(false);
+          return;
+        }
+
+        // Set contact data
+        setContact(data);
+        setEditedContact(data);
+        setNotes(data.notes || "");
+        setStatus(data.status || "new");
+        setLoading(false);
+      } catch (err) {
+        console.error("Error in fetchContactData:", err);
+        setError("An unexpected error occurred. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    fetchContactData();
+  }, [contactId, toast]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -122,36 +125,137 @@ export default function ContactDetail() {
     }
   };
 
-  const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus);
-    setContact({ ...contact, status: newStatus });
-    toast({
-      title: "Status Updated",
-      description: `Contact status has been updated to ${newStatus}`,
-    });
-  };
+  const handleStatusChange = async (newStatus: string) => {
+    if (!contact) return;
 
-  const handleSaveNotes = () => {
-    setContact({ ...contact, notes });
-    toast({
-      title: "Notes Saved",
-      description: "Contact notes have been updated successfully",
-    });
-  };
+    try {
+      setStatus(newStatus);
 
-  const handleEditToggle = () => {
-    if (isEditing) {
-      // Save changes
-      setContact(editedContact);
+      // Update in Supabase if connected
+      if (connectionStatus) {
+        const { error } = await supabase
+          .from("contact_leads")
+          .update({ status: newStatus })
+          .eq("id", contact.id);
+
+        if (error) {
+          console.error("Error updating status in Supabase:", error);
+          toast({
+            title: "Update Error",
+            description:
+              "Failed to update status in database. Changes saved locally only.",
+            variant: "destructive",
+          });
+        }
+      }
+
+      // Update local state
+      setContact({ ...contact, status: newStatus });
+
       toast({
-        title: "Contact Updated",
-        description: "Contact information has been updated successfully",
+        title: "Status Updated",
+        description: `Contact status has been updated to ${newStatus}`,
+      });
+    } catch (err) {
+      console.error("Error in handleStatusChange:", err);
+      toast({
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+        variant: "destructive",
       });
     }
+  };
+
+  const handleSaveNotes = async () => {
+    if (!contact) return;
+
+    try {
+      // Update in Supabase if connected
+      if (connectionStatus) {
+        const { error } = await supabase
+          .from("contact_leads")
+          .update({ notes })
+          .eq("id", contact.id);
+
+        if (error) {
+          console.error("Error saving notes in Supabase:", error);
+          toast({
+            title: "Save Error",
+            description:
+              "Failed to save notes in database. Changes saved locally only.",
+            variant: "destructive",
+          });
+        }
+      }
+
+      // Update local state
+      setContact({ ...contact, notes });
+
+      toast({
+        title: "Notes Saved",
+        description: "Contact notes have been updated successfully",
+      });
+    } catch (err) {
+      console.error("Error in handleSaveNotes:", err);
+      toast({
+        title: "Error",
+        description: "Failed to save notes. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditToggle = async () => {
+    if (!contact || !editedContact) return;
+
+    if (isEditing) {
+      try {
+        // Update in Supabase if connected
+        if (connectionStatus) {
+          const { error } = await supabase
+            .from("contact_leads")
+            .update({
+              name: editedContact.name,
+              email: editedContact.email,
+              phone: editedContact.phone,
+              message: editedContact.message,
+            })
+            .eq("id", contact.id);
+
+          if (error) {
+            console.error("Error updating contact in Supabase:", error);
+            toast({
+              title: "Update Error",
+              description:
+                "Failed to update contact in database. Changes saved locally only.",
+              variant: "destructive",
+            });
+          }
+        }
+
+        // Update local state
+        setContact(editedContact);
+
+        toast({
+          title: "Contact Updated",
+          description: "Contact information has been updated successfully",
+        });
+      } catch (err) {
+        console.error("Error in handleEditToggle:", err);
+        toast({
+          title: "Error",
+          description: "Failed to update contact. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+
     setIsEditing(!isEditing);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editedContact) return;
+
     const { name, value } = e.target;
     setEditedContact({ ...editedContact, [name]: value });
   };
@@ -162,6 +266,63 @@ export default function ContactDetail() {
       description: `An email has been sent to ${contact.email}`,
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Contact Details</h2>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Back
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-red-500">{error}</p>
+              <Button className="mt-4" onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!contact) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Contact Details</h2>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Back
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-gray-500">
+              <p>
+                Contact not found. This contact may have been deleted or does
+                not exist.
+              </p>
+              <Button className="mt-4" onClick={() => navigate(-1)}>
+                Return to Contacts
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -221,6 +382,7 @@ export default function ContactDetail() {
                       name="message"
                       value={editedContact.message}
                       onChange={(e) =>
+                        editedContact &&
                         setEditedContact({
                           ...editedContact,
                           message: e.target.value,
@@ -413,12 +575,6 @@ export default function ContactDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="border-l-2 border-blue-500 pl-4 py-1">
-                  <p className="text-sm font-medium">
-                    Status Changed to {contact.status}
-                  </p>
-                  <p className="text-xs text-gray-500">Today at 10:30 AM</p>
-                </div>
                 <div className="border-l-2 border-gray-300 pl-4 py-1">
                   <p className="text-sm font-medium">Contact Created</p>
                   <p className="text-xs text-gray-500">

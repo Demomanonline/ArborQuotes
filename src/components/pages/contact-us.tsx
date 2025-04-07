@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
+import { supabase } from "../../../supabase/supabase";
 
 export default function ContactUs() {
   const navigate = useNavigate();
@@ -73,24 +74,45 @@ export default function ContactUs() {
     setIsSubmitting(true);
 
     try {
-      // Store contact in localStorage for demo purposes
-      const existingContacts = localStorage.getItem("contactLeads");
-      const contacts = existingContacts ? JSON.parse(existingContacts) : [];
+      // Try to submit to Supabase first
+      try {
+        const { data, error } = await supabase.from("contact_leads").insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            subject: formData.subject || "General Inquiry",
+            message: formData.message,
+            status: "new",
+          },
+        ]);
 
-      // Add new contact with generated ID and timestamp
-      contacts.push({
-        id: Date.now(),
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        subject: formData.subject || "General Inquiry",
-        message: formData.message,
-        status: "new",
-        created_at: new Date().toISOString(),
-      });
+        if (error) throw error;
+      } catch (supabaseError) {
+        console.error(
+          "Supabase error, falling back to localStorage:",
+          supabaseError,
+        );
 
-      // Save back to localStorage
-      localStorage.setItem("contactLeads", JSON.stringify(contacts));
+        // Fallback to localStorage if Supabase fails
+        const existingContacts = localStorage.getItem("contactLeads");
+        const contacts = existingContacts ? JSON.parse(existingContacts) : [];
+
+        // Add new contact with generated ID and timestamp
+        contacts.push({
+          id: Date.now(),
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subject: formData.subject || "General Inquiry",
+          message: formData.message,
+          status: "new",
+          created_at: new Date().toISOString(),
+        });
+
+        // Save back to localStorage
+        localStorage.setItem("contactLeads", JSON.stringify(contacts));
+      }
 
       setIsSuccess(true);
 
